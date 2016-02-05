@@ -26,3 +26,13 @@
 *.exe
 *.out
 *.app
+
+# Garbage
+.DS_Store
+
+# Project specific
+lib/
+m5/
+output/
+compile.sh
+test_prefetcher.py
