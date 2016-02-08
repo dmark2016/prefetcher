@@ -2,6 +2,7 @@
 /* DO NOT MODIFY THIS FILE */
 
 #include <stdint.h>
+#include <stdlib.h>
 
 /*
  * This makes the DPRINT macro and all trace flags available.

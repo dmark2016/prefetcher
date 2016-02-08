@@ -6,6 +6,19 @@
 
 #include "interface.hh"
 
+#define RTP_SIZE 100
+#define INITIAL 0
+#define TRAINING 1
+#define PREFETCH 2
+
+typedef struct entry {
+    Addr pc;
+    Addr last;
+    int stride;
+    int state;
+} Entry;
+
+Entry rpt[RTP_SIZE] = {{ 0 }};
 
 void prefetch_init(void)
 {
@@ -17,15 +30,37 @@ void prefetch_init(void)
 
 void prefetch_access(AccessStat stat)
 {
-    /* pf_addr is now an address within the _next_ cache block */
-    Addr pf_addr = stat.mem_addr + BLOCK_SIZE;
-
-    /*
-     * Issue a prefetch request if a demand miss occured,
-     * and the block is not already in cache.
-     */
-    if (stat.miss && !in_cache(pf_addr)) {
-        issue_prefetch(pf_addr);
+    if (stat.miss) {
+        int index = stat.mem_addr % RTP_SIZE;
+        Entry e;
+        if (rpt[index].pc == 0 or rpt[index].pc != stat.pc) {
+            // New entry
+            e = {stat.pc, stat.mem_addr, -1, INITIAL};
+            rpt[index] = e;
+        } else {
+            // Subsequent miss
+            e = rpt[index];
+            switch (e.state) {
+                case INITIAL:
+                    {
+                        e.stride = abs(e.last - stat.mem_addr);
+                        e.last = stat.mem_addr;
+                        break;
+                    }
+                case TRAINING:
+                    {
+                        int delta = abs(e.last - stat.mem_addr);
+                        if (delta == e.stride) {
+                            e.state = PREFETCH;
+                        } else {
+                            e.stride = delta;
+                        }
+                    }
+            }
+        }
+        if (e.state == PREFETCH && !in_cache(stat.mem_addr + e.stride)) {
+            issue_prefetch(stat.mem_addr + e.stride);
+        }
     }
 }
 
