@@ -4,9 +4,10 @@
  * was just accessed. It also ignores requests to blocks already in the cache.
  */
 
+#include <stdlib.h>
 #include "interface.hh"
 
-#define RTP_SIZE 100
+#define RPT_SIZE 1000
 #define INITIAL 0
 #define TRAINING 1
 #define PREFETCH 2
@@ -18,7 +19,7 @@ typedef struct entry {
     int state;
 } Entry;
 
-Entry rpt[RTP_SIZE] = {{ 0 }};
+Entry rpt[RPT_SIZE] = {{ 0 }};
 
 void prefetch_init(void)
 {
@@ -31,7 +32,7 @@ void prefetch_init(void)
 void prefetch_access(AccessStat stat)
 {
     if (stat.miss) {
-        int index = stat.mem_addr % RTP_SIZE;
+        int index = stat.pc % RPT_SIZE;
         Entry e;
         if (rpt[index].pc == 0 or rpt[index].pc != stat.pc) {
             // New entry
@@ -44,7 +45,9 @@ void prefetch_access(AccessStat stat)
                 case INITIAL:
                     {
                         e.stride = abs(e.last - stat.mem_addr);
+                        e.state = TRAINING;
                         e.last = stat.mem_addr;
+                        rpt[index] = e;
                         break;
                     }
                 case TRAINING:
@@ -55,6 +58,7 @@ void prefetch_access(AccessStat stat)
                         } else {
                             e.stride = delta;
                         }
+                        rpt[index] = e;
                     }
             }
         }

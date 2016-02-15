@@ -36,3 +36,4 @@ m5/
 output/
 compile.sh
 test_prefetcher.py
+stats.txt
