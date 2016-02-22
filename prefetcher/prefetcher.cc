@@ -44,7 +44,7 @@ void prefetch_access(AccessStat stat)
             switch (e.state) {
                 case INITIAL:
                     {
-                        e.stride = abs(e.last - stat.mem_addr);
+                        e.stride = stat.mem_addr - e.last;
                         e.state = TRAINING;
                         e.last = stat.mem_addr;
                         rpt[index] = e;
@@ -52,7 +52,7 @@ void prefetch_access(AccessStat stat)
                     }
                 case TRAINING:
                     {
-                        int delta = abs(e.last - stat.mem_addr);
+                        int delta = stat.mem_addr - e.last;
                         if (delta == e.stride) {
                             e.state = PREFETCH;
                         } else {
