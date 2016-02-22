@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include "interface.hh"
 
-#define RPT_SIZE 1000
+#define RPT_SIZE 512
 #define INITIAL 0
 #define TRAINING 1
 #define PREFETCH 2
@@ -31,12 +31,16 @@ void prefetch_init(void)
 
 void prefetch_access(AccessStat stat)
 {
-    if (stat.miss) {
+    Entry e;
+    //if (stat.miss) {
         int index = stat.pc % RPT_SIZE;
-        Entry e;
         if (rpt[index].pc == 0 or rpt[index].pc != stat.pc) {
             // New entry
-            e = {stat.pc, stat.mem_addr, -1, INITIAL};
+            e = *((Entry*) malloc(sizeof(Entry)));
+            e.pc = stat.pc;
+            e.last = stat.mem_addr;
+            e.stride = 0;
+            e.state = INITIAL;
             rpt[index] = e;
         } else {
             // Subsequent miss
@@ -47,7 +51,6 @@ void prefetch_access(AccessStat stat)
                         e.stride = stat.mem_addr - e.last;
                         e.state = TRAINING;
                         e.last = stat.mem_addr;
-                        rpt[index] = e;
                         break;
                     }
                 case TRAINING:
@@ -58,13 +61,13 @@ void prefetch_access(AccessStat stat)
                         } else {
                             e.stride = delta;
                         }
-                        rpt[index] = e;
                     }
             }
-        }
-        if (e.state == PREFETCH && !in_cache(stat.mem_addr + e.stride)) {
-            issue_prefetch(stat.mem_addr + e.stride);
-        }
+            rpt[index] = e;
+    //    }
+    }
+    if (e.state == PREFETCH && !in_cache(stat.mem_addr + e.stride) && stat.mem_addr + e.stride < MAX_PHYS_MEM_ADDR) {
+        issue_prefetch(stat.mem_addr + e.stride);
     }
 }
 
