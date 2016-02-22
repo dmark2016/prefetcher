@@ -26,6 +26,16 @@ void prefetch_access(AccessStat stat)
      */
     if (stat.miss && !in_cache(pf_addr)) {
         issue_prefetch(pf_addr);
+        issue_prefetch(pf_addr + BLOCK_SIZE);
+        issue_prefetch(pf_addr + 2 * BLOCK_SIZE);
+        issue_prefetch(pf_addr + 3 * BLOCK_SIZE);
+        issue_prefetch(pf_addr + 4 * BLOCK_SIZE);
+    } else {
+      if (!in_cache(pf_addr + 2 * BLOCK_SIZE)) {
+        issue_prefetch(pf_addr + 2 * BLOCK_SIZE);
+        issue_prefetch(pf_addr + 3 * BLOCK_SIZE);
+        issue_prefetch(pf_addr + 4 * BLOCK_SIZE);
+      }
     }
 }
 
