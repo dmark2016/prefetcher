@@ -1,11 +1,20 @@
 /*
- * A sample prefetcher which does sequential one-block lookahead.
- * This means that the prefetcher fetches the next block _after_ the one that
- * was just accessed. It also ignores requests to blocks already in the cache.
+ * Simple implementation of SDP.
  */
 
+#include <stdlib.h>
 #include "interface.hh"
 
+#define SIZE 1000
+
+struct Entry
+{
+	Addr pc;
+	Addr last;
+	int valid;
+};
+
+Entry sdptable[SIZE] = {{ 0 }};
 
 void prefetch_init(void)
 {
@@ -17,16 +26,25 @@ void prefetch_init(void)
 
 void prefetch_access(AccessStat stat)
 {
-    /* pf_addr is now an address within the _next_ cache block */
-    Addr pf_addr = stat.mem_addr + BLOCK_SIZE;
+	int index = stat.pc % SIZE;
 
-    /*
-     * Issue a prefetch request if a demand miss occured,
-     * and the block is not already in cache.
-     */
-    if (stat.miss && !in_cache(pf_addr)) {
-        issue_prefetch(pf_addr);
-    }
+	if (sdptable[index].pc == 0 || sdptable[index].pc != stat.pc)
+	{
+		struct Entry e;
+		e.pc = stat.pc;
+		e.last = stat.mem_addr;
+		e.valid = 1;
+		sdptable[index] = e;
+	}
+	else
+	{
+		int stride = abs(sdptable[index].last - stat.mem_addr);
+		sdptable[index].last = stat.mem_addr;
+
+		if (!in_cache(stat.mem_addr + stride) && stat.mem_addr + stride <= MAX_PHYS_MEM_ADDR) {
+			issue_prefetch(stat.mem_addr + stride);
+		}
+	}
 }
 
 void prefetch_complete(Addr addr) {
