@@ -1,18 +1,16 @@
-/*
- * A sample prefetcher which does sequential one-block lookahead.
- * This means that the prefetcher fetches the next block _after_ the one that
- * was just accessed. It also ignores requests to blocks already in the cache.
+/**
+ * A simple global history buffer implementation with delta correlation.
  */
 
 #include "interface.hh"
 
-#define HISTORY_SIZE 255
-#define INDEX_SIZE 64
+#define HISTORY_SIZE 4096
+#define INDEX_SIZE 2048
 #define DELTA_SIZE 10
-#define PREFETCH_DEGREE 10
+#define PREFETCH_DEGREE 1
 
 // Must be able to contain HISTORY_SIZE
-typedef unsigned char index_t;
+typedef unsigned int index_t;
 
 typedef struct {
     Addr addr;
@@ -29,6 +27,16 @@ index_entry pc_index[INDEX_SIZE];
 history_entry history[HISTORY_SIZE];
 
 index_t end;
+
+
+/**
+ * Perfetches an address if it is valid and not in cache.
+ */
+void try_prefetch(Addr addr) {
+    if (addr > 0 && addr < MAX_PHYS_MEM_ADDR && !in_cache(addr)) {
+        issue_prefetch(addr);
+    }
+}
 
 /**
  * Performs prefetches inferred from the history starting at the given entry.
@@ -48,29 +56,29 @@ void infer_prefetches(history_entry * entry) {
         n_deltas++;
     }
 
-    if (n_deltas < 3) {
-        //TODO: Any better approach in this case? Simple stride?
-        return;
-    }
-
-
-    // Find this delta in the history table
+    // Clever approach - delta correlation
     for (int i = 1; i < n_deltas; i++) {
         if (deltas[i] == deltas[0] && deltas[i + 1] == deltas[1]) {
 
             //MATCH! Prefetch
-            for (int j = 1; j <= PREFETCH_DEGREE && j < i; j++) {
+            for (int j = 1; j <= PREFETCH_DEGREE && j <= i; j++) {
                 base += deltas[i - j];
-
-                if (base > 0 && base < MAX_PHYS_MEM_ADDR && !in_cache(base)) {
-                    issue_prefetch(base);
-                }
+                try_prefetch(base);
             }
 
-            break;
+            return;
         }
     }
 
+    // A little less clever approach - RPT
+    if (n_deltas > 1 && deltas[0] == deltas[1]) {
+        try_prefetch(base + deltas[0]);
+    }
+
+    // Not so clever approach - SDP
+    if (n_deltas == 1) {
+        try_prefetch(base + deltas[0]);
+    }
 }
 
 

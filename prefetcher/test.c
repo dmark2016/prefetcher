@@ -35,10 +35,7 @@ bool test1() {
 
     // Set up prefetches
     Addr prefetches[] = {
-        30, 31,
-        31, 35,
-        35, 40,
-        40, 41
+        12, 30, 31, 35, 40
     };
     expected_prefetches = &prefetches[0];
 
@@ -60,11 +57,31 @@ bool test1() {
 bool test2() {
 
     // Set up prefetches
-    Addr prefetches[] = {};
+    Addr prefetches[] = {3};
     expected_prefetches = &prefetches[0];
 
     // Addresses
     Addr addrs[] = {1, 2, 4, 7, 11, 16, 22, 29, 37, 46, 56};
+    int n_addr = sizeof(addrs)/sizeof(Addr);
+
+    for (int i = 0; i < n_addr; i++) {
+        prefetch_access((AccessStat) {
+            10, addrs[i], i, 1
+        });
+    }
+
+    return prefetch_index == sizeof(prefetches)/sizeof(Addr);
+}
+
+
+bool test3() {
+
+    // Set up prefetches
+    Addr prefetches[] = {1, 1};
+    expected_prefetches = &prefetches[0];
+
+    // Addresses
+    Addr addrs[] = {1, 1, 3, 1, 1, 3};
     int n_addr = sizeof(addrs)/sizeof(Addr);
 
     for (int i = 0; i < n_addr; i++) {
