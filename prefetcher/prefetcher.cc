@@ -47,6 +47,9 @@ void prefetch_access(AccessStat stat)
 		if (!in_cache(stat.mem_addr + stride) && stat.mem_addr + 2 * stride <= MAX_PHYS_MEM_ADDR) {
 			issue_prefetch(stat.mem_addr + 2 * stride);
 		}
+		if (!in_cache(stat.mem_addr + stride) && stat.mem_addr + 3 * stride <= MAX_PHYS_MEM_ADDR) {
+			issue_prefetch(stat.mem_addr + 3 * stride);
+		}
 	}
 }
 
