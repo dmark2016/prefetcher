@@ -4,8 +4,8 @@
 
 #include "interface.hh"
 
-#define HISTORY_SIZE 4096
-#define INDEX_SIZE 2048
+#define HISTORY_SIZE 700
+#define INDEX_SIZE 90
 #define DELTA_SIZE 10
 #define PREFETCH_DEGREE 10
 
@@ -14,14 +14,14 @@ typedef unsigned int index_t;
 
 typedef struct {
     Addr addr;
-    index_t previous;
-    index_t next;
-} history_entry;
+    index_t previous : 10;
+    index_t next : 10;
+} history_entry; // 84 bits
 
 typedef struct {
     Addr pc;
-    index_t last;
-} index_entry;
+    index_t last : 10;
+} index_entry; // 74 bit
 
 index_entry pc_index[INDEX_SIZE];
 history_entry history[HISTORY_SIZE];
