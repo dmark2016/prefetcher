@@ -7,7 +7,7 @@
 #define HISTORY_SIZE 700
 #define INDEX_SIZE 90
 #define DELTA_SIZE 10
-#define PREFETCH_DEGREE 10
+#define DEGREE 7
 
 // Must be able to contain HISTORY_SIZE
 typedef unsigned int index_t;
@@ -61,7 +61,7 @@ void infer_prefetches(history_entry * entry) {
         if (deltas[i] == deltas[0] && deltas[i + 1] == deltas[1]) {
 
             //MATCH! Prefetch
-            for (int j = 1; j < PREFETCH_DEGREE; j++) {
+            for (int j = 1; j < DEGREE; j++) {
                 base += deltas[i - (j % i) - 1];
                 try_prefetch(base);
             }
@@ -72,7 +72,7 @@ void infer_prefetches(history_entry * entry) {
 
     // A little less clever approach - RPT/SDP
     if (n_deltas == 1 || (n_deltas > 1 && deltas[0] == deltas[1])) {
-        for (int i = 0; i < PREFETCH_DEGREE; i++) {
+        for (int i = 0; i < DEGREE; i++) {
             base += deltas[0];
             try_prefetch(base);
         }
