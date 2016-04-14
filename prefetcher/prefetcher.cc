@@ -6,7 +6,7 @@
 #include "interface.hh"
 
 #define SIZE 1000
-#define DEGREE 1
+#define DEGREE 7
 
 struct Entry
 {
@@ -39,11 +39,11 @@ void prefetch_access(AccessStat stat)
 	}
 	else
 	{
-		int stride = abs(sdptable[index].last - stat.mem_addr);
+		int stride =  stat.mem_addr - sdptable[index].last;
 		sdptable[index].last = stat.mem_addr;
 
         for (unsigned i = 0; i < DEGREE; i++) {
-            Addr a = stat.mem_addr + i * stride;
+            Addr a = stat.mem_addr + (i + 1) * stride;
             if (!in_cache(a) && a <= MAX_PHYS_MEM_ADDR) {
                 issue_prefetch(a);
             }
