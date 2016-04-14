@@ -57,12 +57,12 @@ void infer_prefetches(history_entry * entry) {
     }
 
     // Clever approach - delta correlation
-    for (int i = 1; i < n_deltas; i++) {
-        if (deltas[i] == deltas[0] && deltas[i + 1] == deltas[1]) {
+    for (int i = 2; i < n_deltas; i++) {
+        if (deltas[i - 1] == deltas[0] && deltas[i] == deltas[1]) {
 
             //MATCH! Prefetch
-            for (int j = 1; j < DEGREE; j++) {
-                base += deltas[i - (j % i) - 1];
+            for (int j = 0; j < DEGREE; j++) {
+                base += deltas[i - (j % (i - 1)) - 2];
                 try_prefetch(base);
             }
 
