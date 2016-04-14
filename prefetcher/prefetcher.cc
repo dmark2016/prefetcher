@@ -5,6 +5,7 @@
  */
 
 #include "interface.hh"
+#define DEGREE 1
 
 
 void prefetch_init(void)
@@ -17,27 +18,14 @@ void prefetch_init(void)
 
 void prefetch_access(AccessStat stat)
 {
-    /* pf_addr is now an address within the _next_ cache block */
     Addr pf_addr = stat.mem_addr;
 
-    /*
-     * Issue a prefetch request if a demand miss occured,
-     * and the block is not already in cache.
-     */
-    if (stat.miss && !in_cache(pf_addr)) {
-        for (int i = 0; i < DEGREE; i++) {
-            pf_addr += BLOCK_SIZE;
-            issue_prefetch(pf_addr);
-        }
-    } else {
-      if (!in_cache(pf_addr + 2 * BLOCK_SIZE)) {
-        pf_addr += 2*BLOCK_SIZE;
-        for (int i = 2; i < DEGREE; i++) {
-            pf_addr += BLOCK_SIZE;
-            issue_prefetch(pf_addr);
-        }
-      }
-    }
+	for (int i = 0; i < DEGREE; i++) {
+		pf_addr += BLOCK_SIZE;
+		if (!in_cache(pf_addr)) {
+			issue_prefetch(pf_addr);
+		}
+	}
 }
 
 void prefetch_complete(Addr addr) {
