@@ -70,13 +70,6 @@ void infer_prefetches(history_entry * entry) {
         }
     }
 
-    // A little less clever approach - RPT/SDP
-    if (n_deltas == 1 || (n_deltas > 1 && deltas[0] == deltas[1])) {
-        for (int i = 0; i < DEGREE; i++) {
-            base += deltas[0];
-            try_prefetch(base);
-        }
-    }
 }
 
 
