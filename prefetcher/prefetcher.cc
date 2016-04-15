@@ -5,14 +5,14 @@
 #include <stdlib.h>
 #include "interface.hh"
 
-#define SIZE 1000
+#define SIZE 508
 #define DEGREE 7
 
 struct Entry
 {
 	Addr pc;
 	Addr last;
-	int valid;
+	int valid : 1;
 };
 
 Entry sdptable[SIZE] = {{ 0 }};
