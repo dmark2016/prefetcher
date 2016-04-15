@@ -7,16 +7,17 @@
 #include <stdlib.h>
 #include "interface.hh"
 
-#define RPT_SIZE 1024
+#define RPT_SIZE 474
 #define INITIAL 0
 #define TRAINING 1
 #define PREFETCH 2
+#define DEGREE 7
 
 typedef struct entry {
     Addr pc;
     Addr last;
-    int stride;
-    int state;
+    char stride;
+    unsigned state : 2;
 } Entry;
 
 Entry rpt[RPT_SIZE] = {{ 0 }};
@@ -54,7 +55,7 @@ void prefetch_access(AccessStat stat)
                 }
             case TRAINING:
                 {
-                    int delta = stat.mem_addr - e.last;
+                    char delta = stat.mem_addr - e.last;
                     if (delta == e.stride) {
                         e.state = PREFETCH;
                     } else {
@@ -64,8 +65,18 @@ void prefetch_access(AccessStat stat)
         }
         rpt[index] = e;
     }
-    if (e.state == PREFETCH && !in_cache(stat.mem_addr + e.stride) && stat.mem_addr + e.stride < MAX_PHYS_MEM_ADDR) {
-        issue_prefetch(stat.mem_addr + e.stride);
+
+    if (e.state != PREFETCH) {
+        return;
+    }
+
+    Addr a = stat.mem_addr;
+
+    for (unsigned i = 0; i < DEGREE; i++) {
+        a += e.stride;
+        if (a < MAX_PHYS_MEM_ADDR && !in_cache(a)) {
+            issue_prefetch(a);
+        }
     }
 } 
 void prefetch_complete(Addr addr) {
